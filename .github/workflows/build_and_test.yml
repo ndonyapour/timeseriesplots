@@ -1,0 +1,100 @@
+name: Build And Test
+
+on:
+  push:
+  pull_request: 
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+defaults:
+  run:
+    shell: bash -l {0} # Invoke bash in login mode, NOT interactive mode.
+    # This will cause bash to look for the startup file ~/.bash_profile, NOT ~/.bashrc
+    # This is important since conda init writes to ~/.bashrc
+
+# https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions#jobs
+# Rather than use a single job with a linear pipeline of steps, you may be
+# tempted to make each step into a separate job and specify the dependencies
+# using the `needs` syntax for more parallelism.
+# However, data cannot be shared between jobs because each job will be run on a
+# different runner. Even on a self-hosted runner, the `needs` syntax does not
+# guarantee that the data can be shared!
+
+# Using if: always() allows all steps to run, while still properly reporting failure.
+# See https://stackoverflow.com/questions/62045967/github-actions-is-there-a-way-to-continue-on-error-while-still-getting-correct
+
+jobs:
+  build_and_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest] # , windows-latest, macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout source code
+        if: always()
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup conda / mamba
+        if: always()
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-variant: Mambaforge-pypy3
+          miniforge-version: latest
+          activate-environment: tst
+          use-mamba: true
+          channels: conda-forge
+          python-version: "3.9.*" # pypy is not yet compatible with 3.10 and 3.11
+
+      - name: Install System Dependencies from Conda / Mamba
+        if: always()
+    # The version of cwltool in apt (2.0.20200224214940) does not support CWL version 1.2
+    #      run: sudo apt install cwltool
+    # Use conda to install cwltool (version 3.1.20220224085855)
+        run: ./conda_devtools.sh
+
+      - name: ShellCheck Script Quality
+        if: always()
+        run: shellcheck $(find . -name "*.sh" -not -path "./3/*")
+
+      - name: Install Timeseries Tools
+        if: always()
+        run: pip install ".[all]"
+
+      - name: Build Documentation
+        if: always()
+        run: cd docs && make html
+
+      - name: MyPy Check Type Annotations
+        if: always()
+        run: mypy --no-incremental src/
+        # NOTE: Do not use `mypy .` because then mypy will check both src/ and build/ causing:
+        # src/tst/__init__.py: error: Duplicate module named "tst" (also at "./build/lib/tst/__init__.py")
+        # NOTE: We need to use --no-incremental because there is a bug in mypy.
+        # This bug most often occurs when using ruamel library.
+        # See https://github.com/python/mypy/issues/12664
+
+      - name: PyLint Check Code Quality
+        if: always()
+        run: pylint src/
+        # NOTE: See fail-under threshold in .pylintrc
+
+      - name: PEP8 Code Formatting
+        if: always()
+        id: autopep8
+        uses: peter-evans/autopep8@v2
+        with:
+          args: --exit-code --recursive --diff --max-line-length 120 src/ tests/
+      - name: Fail if autopep8 made changes
+        if: steps.autopep8.outputs.exit-code == 2
+        run: exit 1
+
+       # NOTE: Do NOT add coverage to PYPY CI runs https://github.com/tox-dev/tox/issues/2252
+      # - name: PyTest
+      #   if: always()
+      #   run: pytest # --cov

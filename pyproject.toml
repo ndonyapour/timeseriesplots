@@ -1,0 +1,5 @@
+# Based on https://packaging.python.org/en/latest/tutorials/packaging-projects/
+[build-system]
+requires = ["setuptools>=42", "wheel", "versioneer[toml]"]
+
+build-backend = "setuptools.build_meta"
