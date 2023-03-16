@@ -11,8 +11,8 @@ RUN CONDA="Mambaforge-pypy3-Linux-x86_64.sh" && \
 ENV PATH /mambaforge-pypy3/bin:$PATH
 
 # Install timeseries tools
-COPY . /timeseriestools
-WORKDIR /timeseriestools
+COPY . /timeseriesplots
+WORKDIR /timeseriesplots
 
 RUN ./conda_devtools.sh
 RUN pip install -e ".[all]"

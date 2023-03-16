@@ -1,10 +1,10 @@
 Developer API
 ====================================
 
-tst.filewatcher
+tsp.filewatcher
 ------------------------------------
-.. automodule:: tst.filewatcher
+.. automodule:: tsp.filewatcher
 
-tst.timeseries
+tsp.timeseries
 ------------------------------------
-.. automodule:: tst.timeseries
+.. automodule:: tsp.timeseries

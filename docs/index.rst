@@ -1,7 +1,7 @@
 Timeseries Tools documentation
 =======================================================
 
-https://github.com/jfennick/timeseriestools
+https://github.com/jfennick/timeseriesplots
 
 .. toctree::
    :maxdepth: 2

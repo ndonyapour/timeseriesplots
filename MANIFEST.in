@@ -1,2 +1,2 @@
 include versioneer.py
-include src/tst/_version.py
+include src/tsp/_version.py
