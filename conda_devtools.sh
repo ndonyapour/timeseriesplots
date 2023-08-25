@@ -38,3 +38,9 @@ $CONDA install -y -c conda-forge compilers
 #  Or my personal favorite:
 # "../../meson.build:63:0: ERROR: Compiler gfortran can not compile programs."
 $CONDA install -y -c conda-forge pkg-config openblas
+
+# To install scipy and ruptures pip tries to compile binary dependencies, and
+# it needs the compilers and all header files and this can cause error like
+# "SystemError: Cannot compile 'Python.h'. Perhaps you need to install pypy-dev|pypy-devel."
+# so we use conda for these packages that requires binary dependencie.
+$CONDA install -y -c numpy scipy ruptures
